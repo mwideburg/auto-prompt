@@ -24,7 +24,7 @@ npm i
 ```
 
 To run the application run
-```
+```console
 node main.js
 ```
 
