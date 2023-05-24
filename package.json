@@ -1,7 +1,7 @@
 {
-  "name": "binary-file",
+  "name": "ai-journalist",
   "version": "1.0.0",
-  "description": "binary image files",
+  "description": "ai generated blog post with image generation",
   "main": "index.js",
   "scripts": {
     "test": "test"
@@ -10,7 +10,8 @@
     "type": "git",
     "url": "NA"
   },
-  "author": "",
+  "author": "Michael Wideburg",
+  "tags":"AI, openAI, Medium",
   "license": "ISC",
   "dependencies": {
     "aws-sdk": "^2.1381.0",
