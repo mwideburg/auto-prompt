@@ -7,6 +7,8 @@ const openAiKey = process.env.OPENAI_API_KEY;
 const mediumApiKey = process.env.MEDIUM_API_KEY;
 const userId = process.env.USER_ID;
 
+// TODO: Refactor: Breakup openai, medium, and fs to helpers
+
 async function getTopTrendingTopics() {
   const endpoint =
     "https://trends.google.com/trends/hottrends/visualize/internal/data";
