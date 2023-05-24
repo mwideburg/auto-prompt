@@ -1,0 +1,23 @@
+{
+  "name": "binary-file",
+  "version": "1.0.0",
+  "description": "binary image files",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "NA"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.1381.0",
+    "axios": "^1.4.0",
+    "dotenv": "^16.0.3",
+    "form-data": "^4.0.0",
+    "fs": "^0.0.1-security",
+    "googleapis": "^118.0.0"
+  }
+}
