@@ -17,7 +17,7 @@ USER_ID= <MEDIUM USER ID>
 ```
 
 ## Running Application
-First install the dependancies:
+First install the dependencies:
 
 ```console
 npm i
