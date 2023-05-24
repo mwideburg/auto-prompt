@@ -81,9 +81,6 @@ async function promptDALLE(title, topic) {
   // Convert the base64-encoded image data to a buffer
   const buffer = Buffer.from(dalle, "base64");
 
-  //  SAVE TO LOCAL
-  // If not wanted you will have to do a createReadStream
-  // And make the medium aapi request tto save image
 
   await axios({
     url: dalle[0].url,
@@ -164,11 +161,8 @@ async function postToMedium(meta, imageUrl, topic) {
       },
       { headers: mediumHeaders }
     )
-    .then((res) => {
+    .then(async (res) => {
       console.log("Medium posted successfully");
-
-      // Delete local image file
-      fs.unlink(`images/${fileName}`);
     })
     .catch((err) => {
       console.log(`Error posting to medium, ${err.message}`);

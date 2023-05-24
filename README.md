@@ -1,5 +1,5 @@
 # Auto AI Blog Poster and Image Generater
-This is a very basic example using OpenAI and Medium to create an automatic posting application leveraging AI to create blog posts with ai generated images of the top 10 trending topics of google.
+This is a very basic example using OpenAI and Medium to create an automatic posting application leveraging AI to create blog posts with ai generated images.
 
 
 ## Live Blog Example
