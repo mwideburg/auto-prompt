@@ -178,7 +178,7 @@ async function postToMedium(meta, imageUrl, topic) {
 async function app() {
   const trends = await getTopTrendingTopics();
   const posts = [];
-  for (let i = 4; i < 10; i++) {
+  for (let i = 0; i < 10; i++) {
     const topic = trends[i];
     const message = `Write a blog post about ${topic}, 
       extrapolate the reason this would be the current most trending topic. 
