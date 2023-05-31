@@ -7,8 +7,6 @@ const openAiKey = process.env.OPENAI_API_KEY;
 const mediumApiKey = process.env.MEDIUM_API_KEY;
 const userId = process.env.USER_ID;
 
-// TODO: Refactor: Breakup openai, medium, and fs to helpers
-
 async function getTopTrendingTopics() {
   const endpoint =
     "https://trends.google.com/trends/hottrends/visualize/internal/data";
@@ -27,7 +25,7 @@ async function promptOpenAI(topic, message) {
       {
         role: "system",
         content:
-          "You are a journalist who writes about popular topics but with references to the universe and astrophysics",
+          "You are a journalist who writes about popular topics but with references science, science fiction, cult movies, and astrophysics",
       },
       { role: "user", content: message },
     ],
@@ -76,40 +74,18 @@ async function promptDALLE(title, topic) {
   });
   const dalle = dalleResponse.data.data;
 
-  const fileName = topic.split(" ").join("_") + ".png";
-
-  // Convert the base64-encoded image data to a buffer
-  const buffer = Buffer.from(dalle, "base64");
-
-
-  await axios({
+  const response = await axios({
     url: dalle[0].url,
     responseType: "stream",
-  })
-    .then(async (response) => {
-      await response.data
-        .pipe(fs.createWriteStream(`./images/${fileName}`))
-        .on("finish", () => {
-          console.log("Image saved successfully.");
-        })
-        .on("error", (err) => {
-          console.error("Error while saving the image:", err);
-        });
-    })
-    .catch((err) => {
-      console.error("Error while downloading the image:", err);
-    });
-}
+  });
 
-async function uploadImageToMedium(topic) {
-  const fileName = topic.split(" ").join("_") + ".png";
   let data = new FormData();
   data.append(
     "Content-Disposition",
     'form-data; name="image"; filename=`testing.png`'
   );
   data.append("Content-Type", "image/png");
-  data.append("image", fs.createReadStream(`./images/${fileName}`));
+  data.append("image", response.data);
 
   let config = {
     method: "post",
@@ -140,7 +116,6 @@ async function uploadImageToMedium(topic) {
 
 async function postToMedium(meta, imageUrl, topic) {
   const { title, tags, post } = meta;
-  const fileName = topic.split(" ").join("_") + ".png";
   const mediumEndpoint = `https://api.medium.com/v1/users/${userId}/posts`;
   const mediumHeaders = {
     Authorization: `Bearer ${mediumApiKey}`,
@@ -167,24 +142,27 @@ async function postToMedium(meta, imageUrl, topic) {
     .catch((err) => {
       console.log(`Error posting to medium, ${err.message}`);
     });
+
+    return mediumResponse
 }
 
 async function app() {
   const trends = await getTopTrendingTopics();
   const posts = [];
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 5; i++) {
     const topic = trends[i];
     const message = `Write a blog post about ${topic}, 
       extrapolate the reason this would be the current most trending topic. 
       Include Title, Tags, and Categories.`;
 
-    const postMeta = await promptOpenAI(topic, message);
-
-    await promptDALLE(postMeta.title, topic);
-    setTimeout(async () => {
-      const imageURL = await uploadImageToMedium(topic);
+    try {
+      const postMeta = await promptOpenAI(topic, message);
+      const imageURL = await promptDALLE(postMeta.title, topic);
       await postToMedium(postMeta, imageURL, topic);
-    }, 1000);
+    } catch (err) {
+      console.log(err);
+      continue;
+    }
   }
 }
 
