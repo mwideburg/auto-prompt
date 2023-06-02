@@ -10,10 +10,16 @@ const userId = process.env.USER_ID;
 async function getTopTrendingTopics() {
   const endpoint =
     "https://trends.google.com/trends/hottrends/visualize/internal/data";
-  return axios.get(endpoint).then((response) => {
-    const trends = response.data["united_states"];
-    return trends;
-  });
+  return axios
+    .get(endpoint)
+    .then((response) => {
+      console.log("Trends receieved");
+      const trends = response.data["united_states"];
+      return trends;
+    })
+    .catch((error) => {
+      console.log(`Error retrieving trends: ${error.message}`);
+    });
 }
 
 async function promptOpenAI(topic, message) {
@@ -37,7 +43,17 @@ async function promptOpenAI(topic, message) {
     Authorization: `Bearer ${openAiKey}`,
   };
 
-  const response = await axios.post(postEndpoint, postData, { headers });
+  console.log("Getting prompt");
+
+  const response = await axios
+    .post(postEndpoint, postData, { headers })
+    .then((res) => {
+      console.log("Success gettting prompt");
+      return res;
+    })
+    .catch((error) => {
+      console.log(`Error getting prompt: ${error.message}`);
+    });
 
   // Parse the response
   const dataResponse = response.data.choices[0].message.content;
@@ -57,7 +73,8 @@ async function promptOpenAI(topic, message) {
   return meta;
 }
 
-async function promptDALLE(title, topic) {
+async function promptDALLE(title) {
+  console.log("Prompting DALLE-E");
   const headers = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${openAiKey}`,
@@ -69,15 +86,31 @@ async function promptDALLE(title, topic) {
     size: "512x512",
   };
 
-  const dalleResponse = await axios.post(dalleEndpoint, dalleData, {
-    headers,
-  });
+  const dalleResponse = await axios
+    .post(dalleEndpoint, dalleData, {
+      headers,
+    })
+    .then((res) => {
+      console.log("Success prompting DALL-E");
+      return res;
+    })
+    .catch((error) => {
+      console.log(`Error prompting DALLE: ${error}`);
+    });
+
   const dalle = dalleResponse.data.data;
 
   const response = await axios({
     url: dalle[0].url,
     responseType: "stream",
-  });
+  })
+    .then((res) => {
+      console.log("Success generating image");
+      return res;
+    })
+    .catch((error) => {
+      console.log(`Error generating image: ${error.message}`);
+    });
 
   let data = new FormData();
   data.append(
@@ -104,10 +137,11 @@ async function promptDALLE(title, topic) {
   const mediumImagerespone = await axios
     .request(config)
     .then((response) => {
+      console.log("Success posting image to medium");
       return response;
     })
     .catch((error) => {
-      console.log(error);
+      console.log("Error posting image", error.message);
     });
   const imageUrl = mediumImagerespone.data.data.url;
 
@@ -143,13 +177,13 @@ async function postToMedium(meta, imageUrl, topic) {
       console.log(`Error posting to medium, ${err.message}`);
     });
 
-    return mediumResponse
+  return mediumResponse;
 }
 
 async function app() {
   const trends = await getTopTrendingTopics();
   const posts = [];
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 3; i++) {
     const topic = trends[i];
     const message = `Write a blog post about ${topic}, 
       extrapolate the reason this would be the current most trending topic. 
@@ -157,10 +191,10 @@ async function app() {
 
     try {
       const postMeta = await promptOpenAI(topic, message);
-      const imageURL = await promptDALLE(postMeta.title, topic);
+      const imageURL = await promptDALLE(postMeta.title);
       await postToMedium(postMeta, imageURL, topic);
     } catch (err) {
-      console.log(err);
+      console.log(`Something went wrong: ${err.message}`);
       continue;
     }
   }
