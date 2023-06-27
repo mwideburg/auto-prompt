@@ -6,6 +6,18 @@ require("dotenv").config();
 const openAiKey = process.env.OPENAI_API_KEY;
 const mediumApiKey = process.env.MEDIUM_API_KEY;
 const userId = process.env.USER_ID;
+const googleApiKey = process.env.GOOGLE_API_KEY;
+const googleSearchEngine = process.env.GOOGLE_SEARCH_ENGINE;
+
+const TOPICS = [
+  "science, science fiction, cult movies, and astrophysics",
+  "Harry Potter",
+  "Star Trek TNG",
+  "Astrophysics",
+  "Sports",
+  "Cult Movies",
+  "James Bond",
+];
 
 async function getTopTrendingTopics() {
   const endpoint =
@@ -22,16 +34,39 @@ async function getTopTrendingTopics() {
     });
 }
 
+async function getSnippets(searchQuery) {
+    console.log("Getting Snippets");
+  const url = `https://www.googleapis.com/customsearch/v1?key=${googleApiKey}&cx=${googleSearchEngine}&q=${searchQuery}`;
+  return axios
+    .get(url)
+    .then((response) => {
+      const data = response.data;
+      // Handle the API response here
+      const searchResults = data.items; // Extract the search results
+      let snippets = "";
+      for (let item of searchResults) {
+        // console.log(item.snippet);
+        snippets += item.snippet + "\n\n";
+      }
+      console.log("Getting recevied");
+      return snippets;
+      // Continue with generating summaries using ChatGPT
+    })
+    .catch((error) => {
+      // Handle any errors
+      console.error("Error:", error);
+    });
+}
+
 async function promptOpenAI(topic, message) {
   const postEndpoint = "https://api.openai.com/v1/chat/completions";
-
+  const randomIndex = Math.floor(Math.random() * TOPICS.length);
   const postData = {
     model: "gpt-3.5-turbo",
     messages: [
       {
         role: "system",
-        content:
-          "You are a journalist who writes about popular topics but with references science, science fiction, cult movies, and astrophysics",
+        content: `You are a journalist who writes about popular topics but references ${TOPICS[randomIndex]}`,
       },
       { role: "user", content: message },
     ],
@@ -43,11 +78,12 @@ async function promptOpenAI(topic, message) {
     Authorization: `Bearer ${openAiKey}`,
   };
 
-  console.log("Getting prompt");
-
+  console.log(`Getting prompt for: ${topic}`);
+  //   terminalAnimation();
   const response = await axios
     .post(postEndpoint, postData, { headers })
     .then((res) => {
+      //   stopAnimation();
       console.log("Success gettting prompt");
       return res;
     })
@@ -74,7 +110,7 @@ async function promptOpenAI(topic, message) {
 }
 
 async function promptDALLE(title) {
-  console.log("Prompting DALLE-E");
+  console.log(`Prompting DALLE-E for: ${title}`);
   const headers = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${openAiKey}`,
@@ -85,12 +121,13 @@ async function promptDALLE(title) {
     n: 1,
     size: "512x512",
   };
-
+  //   terminalAnimation();
   const dalleResponse = await axios
     .post(dalleEndpoint, dalleData, {
       headers,
     })
     .then((res) => {
+      //   stopAnimation();
       console.log("Success prompting DALL-E");
       return res;
     })
@@ -180,19 +217,75 @@ async function postToMedium(meta, imageUrl, topic) {
   return mediumResponse;
 }
 
+let animationInterval; // Global variable to store the interval ID
+
+function terminalAnimation() {
+  const symbols = ["-", "\\", "|", "/"]; // Symbols to display
+  let currentSymbolIndex = 0; // Index of the current symbol
+
+  animationInterval = setInterval(() => {
+    // Clear the console
+
+    // Move the cursor up one line
+    // process.stdout.write("\x1b[1A");
+    // Clear the line
+    process.stdout.write("\x1b[2K");
+    // Display the current symbol
+    process.stdout.write(`Processing... ${symbols[currentSymbolIndex]}`);
+
+    // Increment the symbol index
+    currentSymbolIndex = (currentSymbolIndex + 1) % symbols.length;
+  }, 200); // Change symbol every 200 milliseconds
+}
+
+function stopAnimation() {
+  clearInterval(animationInterval);
+  console.clear();
+  console.log("Animation stopped.");
+}
+
+function getTimeStamp() {
+  const timestamp = Date.now();
+
+  const date = new Date(timestamp);
+
+  // Formatting the date components
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+
+  // Constructing the date string
+  const dateString = `${year}-${month}-${day} ${hours}:${minutes}`;
+  console.log(dateString); // Output: YYYY-MM-DD HH:MM (e.g., 2023-06-07 15:30)
+  return dateString;
+}
+
 async function app() {
   const trends = await getTopTrendingTopics();
   const posts = [];
-  for (let i = 0; i < 3; i++) {
+  getTimeStamp();
+
+  for (let i = 0; i < 6; i++) {
     const topic = trends[i];
-    const message = `Write a blog post about ${topic}, 
-      extrapolate the reason this would be the current most trending topic. 
-      Include Title, Tags, and Categories.`;
+    const snippets = await getSnippets(topic);
+    const message =
+      `Write a blog post about ${topic}, include Title, Tags, and Categories.
+    Use these snippets to figure out the most recent news about the topic:` + snippets;
+    // Run the terminal animation
+    // terminalAnimation();
+    // setTimeout(stopAnimation, 1000);
 
     try {
+      
       const postMeta = await promptOpenAI(topic, message);
       const imageURL = await promptDALLE(postMeta.title);
       await postToMedium(postMeta, imageURL, topic);
+      const timestamp = getTimeStamp();
+      console.log(
+        `POSTED: blog about ${topic}, with the title:${postMeta.title}, at ${timestamp}`
+      );
     } catch (err) {
       console.log(`Something went wrong: ${err.message}`);
       continue;
