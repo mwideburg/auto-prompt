@@ -281,7 +281,7 @@ async function app() {
       
       const postMeta = await promptOpenAI(topic, message);
       const imageURL = await promptDALLE(postMeta.title);
-      await postToMedium(postMeta, imageURL, topic);
+    //   await postToMedium(postMeta, imageURL, topic);
       const timestamp = getTimeStamp();
       console.log(
         `POSTED: blog about ${topic}, with the title:${postMeta.title}, at ${timestamp}`
