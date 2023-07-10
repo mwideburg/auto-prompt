@@ -267,7 +267,7 @@ async function app() {
   const posts = [];
   getTimeStamp();
 
-  for (let i = 0; i < 6; i++) {
+  for (let i = 6; i < 12; i++) {
     const topic = trends[i];
     const snippets = await getSnippets(topic);
     const message =
