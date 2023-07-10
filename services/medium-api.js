@@ -8,7 +8,7 @@ class MediumApi {
     this.userId = process.env.USER_ID;
   }
 
-  async postToMedium(meta, imageUrl) {
+  async postToMedium(meta, imageUrl, postStatus) {
   const { title, tags, post } = meta;
   const mediumEndpoint = `https://api.medium.com/v1/users/${this.userId}/posts`;
   const mediumHeaders = {
@@ -26,7 +26,7 @@ class MediumApi {
         contentFormat: "html",
         content:
           "<h1>" + title + "</h1>" + "<img src=" + imageUrl + " />" + post,
-        publishStatus: "public",
+        publishStatus: postStatus,
       },
       { headers: mediumHeaders }
     )
