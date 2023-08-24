@@ -16,6 +16,7 @@ Here's a template of what your `.env` file should look like, based on the `.env-
 OPENAI_API_KEY = YOUR_OPENAI_API_KEY
 MEDIUM_API_KEY = YOUR_MEDIUM_API_KEY
 USER_ID = YOUR_MEDIUM_USER_ID
+```
 
 ## Running Application
 First install the dependencies:
